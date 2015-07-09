@@ -1,0 +1,10 @@
+*.log
+*.aux
+*.bbl
+*.blg
+*.out
+*.pdf
+*.xml
+*.gz
+*.toc
+reactive-programming-thesis-blx.bib

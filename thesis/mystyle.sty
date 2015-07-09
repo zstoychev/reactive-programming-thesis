@@ -1,0 +1,13 @@
+\ProvidesPackage{mystyle}
+
+\newcommand{\englishterm}[1]{\textenglish{\textit{#1}}}
+
+\newcommand{\shortlabeledref}[2]{\hyperref[#2]{#1 \ref*{#2}}}
+\newcommand{\labeledref}[2]{\hyperref[#2]{#1 \ref*{#2} „\nameref*{#2}“}}
+
+\newcommand{\code}[1]{\lstinline[keepspaces=true, breaklines=false, prebreak={}]{#1}}
+\newcommand{\type}[1]{\code{#1}}
+
+\newcounter{attachment}
+\setcounter{attachment}{0}
+\newcommand{\attachment}[1]{\refstepcounter{attachment}\textbf{Приложение \theattachment:} #1}
