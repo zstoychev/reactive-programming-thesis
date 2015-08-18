@@ -404,11 +404,11 @@ def exceptionThrowing(n: Int): Int = {
 
 \subsection{Тип за изключения \type{Try}}
 
-Нека да опитаме да направим нещо аналогично на \type{Option}. Всъщност дори бихме могли да използваме опционалността и \type{None} за сигнализиране на грешка, но \type{None} не ни позволява да предадем каква е била тя. Стандартните изключения в Scala (и Java) са много добри за описване на грешки и изключителни ситуации и затова нека да създадем тип \type{Try[T]}, базиран върху тях, с два подтипа:
+Нека да опитаме да направим нещо аналогично на \type{Option}. Всъщност дори бихме могли да използваме опционалността и \type{None} за сигнализиране на грешка, но \type{None} не ни позволява да предадем каква е била тя. Стандартните изключения в Scala (и Java) са много добри за описване на грешки и изключителни ситуации и затова нека да създадем тип \type{Try[+T]}, базиран върху тях, с два подтипа:
 
 \begin{itemize*}
-  \item \type{Success[T](value: T)}, изразяващ успех и наличие на стойност, подобно на \type{Some[T]};
-  \item \type{Failure[T](exception: Throwable)}, изразяващ грешка и съхраняващ причината за грешката под формата на изключение. Това е аналогично на \type{None}, с тази разлика, че съхраняваме допълнителна информация, поради което не можем да се възползваме от \englishterm{singleton} обект.
+  \item \type{Success[+T](value: T)}, изразяващ успех и наличие на стойност, подобно на \type{Some[T]};
+  \item \type{Failure[+T](exception: Throwable)}, изразяващ грешка и съхраняващ причината за грешката под формата на изключение. Това е аналогично на \type{None}, с тази разлика, че съхраняваме допълнителна информация, поради което не можем да се възползваме от \englishterm{singleton} обект.
 \end{itemize*}
 
 Към класовете бихме могли да дефинираме и аналогични на \type{Option} функции за трансформации, включително и такива, трансформиращи \type{Failure} стойностите (методи \code{recover} и \code{recoverWith}). Реализацията е аналогична и може да бъде видяна в \shortlabeledref{приложение}{att:fp}. В стандартната библиотека на Scala е реализиран Try по аналогичен начин.
@@ -441,16 +441,16 @@ exceptionThrowing2(2) // Success(0)
 \subsection{Сумарни типове \type{Either} и \type{Validation}}
 \label{sec:sum-types-either-validation}
 
-Понякога изключенията не са подходящ тип за боравене с грешки. В тези случаи се налага грешките да бъдат представени чрез обекти с по-специфична информация. За да постигнем това може да генерализираме \type{Try} чрез по общ-тип \type{Either[E, T]}, където \type{E} е типът на грешките, а \type{T} е типът на стойностите. Реализацията би била аналогична на \type{Try}, заедно с разгледаните трансформиращи функции (\shortlabeledref{приложение}{att:fp}).
+Понякога изключенията не са подходящ тип за боравене с грешки. В тези случаи се налага грешките да бъдат представени чрез обекти с по-специфична информация. За да постигнем това може да генерализираме \type{Try} чрез по общ-тип \type{Either[+E, +T]}, където \type{E} е типът на грешките, а \type{T} е типът на стойностите. Реализацията би била аналогична на \type{Try}, заедно с разгледаните трансформиращи функции (\shortlabeledref{приложение}{att:fp}).
 
-Стандартната библиотека на Scala съдържа тип \type{Either[L, R]}, но той е по-общ с това, че може да се използва не само за работа с грешки, но и като тип, сумиращ два типа \type{L} и \type{R}, тоест обектите от тип \type{Either} обвиват или обект от тип \type{L} или \type{R}. Поради това той не поддържа директно трансформиращите функции. По конвенция когато се използва за грешки \type{L} е типът за грешни стойности, а \type{R} типът за успешни.
+Стандартната библиотека на Scala съдържа тип \type{Either[+L, +R]}, но той е по-общ с това, че може да се използва не само за работа с грешки, но и като тип, сумиращ два типа \type{L} и \type{R}, тоест обектите от тип \type{Either} обвиват или обект от тип \type{L} или \type{R}. Поради това той не поддържа директно трансформиращите функции. По конвенция когато се използва за грешки \type{L} е типът за грешни стойности, а \type{R} типът за успешни.
 
 Понякога искаме да изпълним няколко операции едновременно и да комбинираме резултатите от тях. Би било удобно всички грешки, генерирани от тях, да се комбинират в списък от грешки. Пример за това е валидирането на няколко полета от уеб формуляр. Валидацията на различни полета протича независимо и накрая бихме искали да върнем всички грешки на клиента, ако има такива. За ще може да създадем тип \type{Validation[E, T]}, подобен на \type{Either}, който вместо единична грешка поддържа множество от грешки:
 
 \begin{lstlisting}
 sealed trait Validation[+E, +T]
-case class Valid[T](value: T) extends Validation[Nothing, T]
-case class Invalid[E](errors: NonEmptyList[E]) extends Validation[E, Nothing]
+case class Valid[+E, +T](value: T) extends Validation[E, T]
+case class Invalid[+E, +T](errors: NonEmptyList[E]) extends Validation[E, T]
 \end{lstlisting}
 
 Пример за използването му ще видим в \labeledref{секция}{sec:applicatives}.
@@ -538,19 +538,21 @@ package monoids
 
 // ...
 
-implicit val intAdditiveMonoid = new Monoid[Int] {
-  def op(a: Int, b: Int): Int = a + b
-  def identity: Int = 0
-}
-
-implicit val intMultiplicativeMonoid = new Monoid[Int] {
-  def op(a: Int, b: Int): Int = a * b
-  def zero: Int = 1
-}
-
-implicit val stringMonoid = new Monoid[String] {
-  def op(a: String, b: String): String = a + b
-  def identity: String = ""
+package object monoids {
+  implicit val intAdditiveMonoid = new Monoid[Int] {
+    def op(a: Int, b: Int): Int = a + b
+    def identity: Int = 0
+  }
+  
+  implicit val intMultiplicativeMonoid = new Monoid[Int] {
+    def op(a: Int, b: Int): Int = a * b
+    def identity: Int = 1
+  }
+  
+  implicit val stringMonoid = new Monoid[String] {
+    def op(a: String, b: String): String = a + b
+    def identity: String = ""
+  }
 }
 
 // ---------------
@@ -649,7 +651,7 @@ trait Monad[F[_]] {
 implicit val optionMonad = new Monad[Option] {
   def compose[A, B, C](f: A => Option[B], g: B => Option[C]): A => Option[C] =
     a => f(a) map { b => g(b) } getOrElse None
-  def unit[A](a: => A): F[A] = Some(a)
+  def unit[A](a: => A): Option[A] = Some(a)
 }
 \end{lstlisting}
 
@@ -705,10 +707,11 @@ def flatMap[A, B](f: A => Option[B]): Option[B] =
 implicit val optionMonad = new Monad[Option] {
   def flatMap[A, B](m: Option[A])(f: A => Option[B]): Option[B] =
     m flatMap f
-  def unit[A](a: => A): F[A] = Some(a)
+  def unit[A](a: => A): Option[A] = Some(a)
   
   // предефиниране за оптимизация
-  def map[A, B](m: Option[A])(f: A => B): Option[B] = m map f
+  override def map[A, B](m: Option[A])(f: A => B): Option[B] =
+    m map f
 }
 \end{lstlisting}
 
@@ -754,11 +757,11 @@ def sumFGH(value: Int): Option[Int] = for {
 trait Monad[F[_]] {
   // ...
   
-  def map2[A, B, C](ma: M[A], mb: M[B])(f: (A, B) => C): M[C] =
+  def map2[A, B, C](ma: F[A], mb: F[B])(f: (A, B) => C): F[C] =
     flatMap(ma)(a => map(mb)(b => f(a, b)))
   def join[A](m: F[F[A]]): F[A] = flatMap(m)(x => x)
-  def traverse[A, B](xs: List[A])(f: A => F[B]): M[List[B]] =
-    xs.foldRight(unit(List[A]())) { (next, acc) =>
+  def traverse[A, B](xs: List[A])(f: A => F[B]): F[List[B]] =
+    xs.foldRight(unit(List[B]())) { (next, acc) =>
       map2(f(next), acc)(_ :: _)
     }
   def sequence[A](ml: List[F[A]]): F[List[A]] = traverse(ml)(m => m)
@@ -822,7 +825,7 @@ val res2 = for {
 За монадите с нули можем да дефинираме следната операция:
 
 \begin{lstlisting}
-def filter(m: F[A])(f: A => Boolean): F[A] =
+def filter[A](m: F[A])(f: A => Boolean): F[A] =
   flatMap(m) { x => if (f(x)) unit(x) else mzero }
 \end{lstlisting}
 
@@ -848,7 +851,7 @@ val res = for {
 
 \begin{lstlisting}
 trait Applicative[F[_]] {
-  def apply[A, B](f: F[A => B])(a: F[A]): F[B]
+  def apply[A, B](mf: F[A => B])(ma: F[A]): F[B]
   def unit[A](a: => A): F[A]
 }
 \end{lstlisting}
@@ -865,7 +868,7 @@ def person(firstName: String, lastName: String, age: Int): Validation[ErrorType,
     validateName(firstName),
     validateName(lastName),
     validateAge(age)
-  )(Person _)
+  )(Person.apply _)
 }
 \end{lstlisting}
 
@@ -907,7 +910,7 @@ def serializeToJson[T](value: T)(implicit js: JsonSerializable[T]): String = ???
 Сега нека да добавим \code{toJson} методи към всеки обект чрез механизма за имплицитно конвертиране на Scala. Те ще бъде видими само в контексти, в които се интересуваме от сериализация (за целта е нужен само \code{import}):
 
 \begin{lstlisting}
-implicit class ToJson[T](value: T) extends AnyVal {
+implicit class ToJson[T](val value: T) extends AnyVal {
   def toJson(implicit js: JsonSerializable[T]) = js.toJson(value)
   def toJsonString(implicit js: JsonSerializable[T]) = serializeToJson(value)
 }
@@ -965,19 +968,21 @@ def map[A, B](xs: List[T])(f: A => B): List[B] = xs match {
   case Nil => Nil
 }
 
-def serializeToJson[T](value: T)(implicit js: JsonSerializable[T]): String = value match {
+def transformJsonToString(value: JsonValue): String = value match {
   case JsonNumber(value) => value.toString
   case JsonString(value) => value
   case JsonBoolean(value) => value.toString
   case JsonArray(elements) =>
-    "[" + value.map(serializeToJson).mkString(",") + "]"
+    "[" + elements.map(transformJsonToString).mkString(", ") + "]"
   case JsonObject(members) =>
-   val membersStrings = members.map { case (key, value) =>
-     "\"key\": " + serializeToJson(value)
-   }
-   "{" + memberStrings.mkString(",") + "}"
+    val membersStrings = members.map { case (key, value) =>
+      s"""\"${key}\": ${transformJsonToString(value)}"""
+    }
+    "{" + membersStrings.mkString(", ") + "}"
   case JsonNull => "null"
 }
+  
+def serializeToJson[T](value: T)(implicit js: JsonSerializable[T]): String = transformJsonToString(js.toJson(value))
 \end{lstlisting}
 
 Блокът с \code{case} клаузи може да се използва и отделно, както се вижда в примера със сериализиране на \type{JsonObject}. Тогава блокът се оценява до частична функция, което е тип, наследяващ \type{Function1}, но с допълнителни методи:
