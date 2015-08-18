@@ -8,8 +8,13 @@
 \newcommand{\code}[1]{\lstinline[keepspaces=true, breaklines=false, prebreak={}]{#1}}
 \newcommand{\type}[1]{\code{#1}}
 
+\newcommand{\filepath}[1]{\texttt{\footnotesize#1}}
+
 \newcounter{attachment}
 \setcounter{attachment}{0}
-\newcommand{\attachment}[1]{\refstepcounter{attachment}\textbf{Приложение \theattachment:} #1}
+\newenvironment{attachment}[1]{
+  \refstepcounter{attachment}\textbf{Приложение \theattachment:} #1
+
+}{}
 
 \newenvironment{chapterend}{\bigskip\itshape}{}

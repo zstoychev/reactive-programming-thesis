@@ -2,4 +2,16 @@
 \label{sec:attachments}
 \addcontentsline{toc}{chapter}{\nameref{sec:attachments}}
 
-\attachment{Имплементация на функционални структури.}\label{att:fp}
+\begin{attachment}{Имплементация на функционални структури.}
+  \filepath{source/functional}, пакет \code{functional}:
+  
+  \begin{itemize*}
+    \item \code{util.Option}, \code{util.Try}, \code{util.Either}, \code{util.Validation} — имплементация на разгледаните структури и добавянето им като монада/апликативен функтор.
+    
+    \item \code{Monoid}, \code{Applicative}, \code{Monad} — имплементация на разгледаните класове на типове.
+    
+    \item Пакет \code{expression_problem} — сравнение на подтиповия полиморфизъм със съпоставянето по образци.
+    
+    \item Пакет \code{json} — инструменти за JSON сериализация.
+  \end{itemize*}
+\end{attachment}
