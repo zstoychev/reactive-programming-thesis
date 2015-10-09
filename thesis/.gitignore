@@ -3,9 +3,10 @@
 *.bbl
 *.blg
 *.out
-*.pdf
+/*.pdf
 *.xml
 *.gz
 *.toc
 *.lof
+*.lol
 reactive-programming-thesis-blx.bib
