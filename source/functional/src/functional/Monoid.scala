@@ -6,6 +6,10 @@ trait Monoid[T] {
 }
 
 object Monoid {
+  def sum[T](xs: List[T])(implicit m: Monoid[T]) = {
+    xs.foldLeft(m.identity)((acc, next) => m.op(acc, next))
+  }
+
   implicit val intAdditiveMonoid = new Monoid[Int] {
     def op(a: Int, b: Int): Int = a + b
     def identity: Int = 0

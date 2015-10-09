@@ -1,8 +1,9 @@
 package functional.util
 
 import functional.MonadWithZero
+import functional.util.Try._
 
-// Имплементацията игнорира хвърлянето на изключения
+import scala.util.control.NonFatal
 
 sealed trait Try[+T] {
   def get: T
@@ -24,6 +25,9 @@ sealed trait Try[+T] {
 }
 
 object Try {
+  def apply[T](value: => T) = tryM(Success(value))
+  def tryM[T](tryValue: => Try[T]) = try tryValue catch { case NonFatal(e) => Failure(e) }
+
   implicit val tryMonad = new MonadWithZero[Try] {
     def flatMap[A, B](m: Try[A])(f: A => Try[B]): Try[B] = m flatMap f
     def unit[A](a: => A): Try[A] = Success(a)
@@ -40,9 +44,9 @@ case class Success[+T](value: T) extends Try[T] {
   def getOrElse[V >: T](default: => V) = value
   def orElse[V >: T](default: => Try[V]) = this
 
-  def map[V](f: T => V) = Success(f(value))
-  def flatMap[V](f: T => Try[V]) = f(value)
-  def filter(f: T => Boolean) = if (f(value)) this else Failure(new NoSuchElementException)
+  def map[V](f: T => V) = Try(f(value))
+  def flatMap[V](f: T => Try[V]) = tryM(f(value))
+  def filter(f: T => Boolean) = tryM(if (f(value)) this else Failure(new NoSuchElementException))
 
   def recover[V >: T](f: PartialFunction[Throwable, V]) = this
   def recoverWith[V >: T](f: PartialFunction[Throwable, Try[V]]) = this
@@ -59,6 +63,8 @@ case class Failure[+T](exception: Throwable) extends Try[T] {
   def flatMap[V](f: T => Try[V]) = this.asInstanceOf[Failure[V]]
   def filter(f: T => Boolean) = this
 
-  def recover[V >: T](f: PartialFunction[Throwable, V]) = if (f.isDefinedAt(exception)) Success(f(exception)) else this
-  def recoverWith[V >: T](f: PartialFunction[Throwable, Try[V]]) = if (f.isDefinedAt(exception)) f(exception) else this
+  def recover[V >: T](f: PartialFunction[Throwable, V]) =
+    tryM(if (f.isDefinedAt(exception)) Success(f(exception)) else this)
+  def recoverWith[V >: T](f: PartialFunction[Throwable, Try[V]]) =
+    tryM(if (f.isDefinedAt(exception)) f(exception) else this)
 }

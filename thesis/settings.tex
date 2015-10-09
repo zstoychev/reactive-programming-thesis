@@ -11,12 +11,14 @@
 \usepackage{mdwlist}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{pgf-umlcd}
+\usepackage{threeparttable}
 
 \setmainfont[Ligatures=TeX]{Liberation Serif}
 \setsansfont{Liberation Sans}
 \setmonofont{Liberation Mono}
 
-\setmainlanguage{bulgarian} 
+\setmainlanguage{bulgarian}
 \setotherlanguage{english}
 
 \PolyglossiaSetup{bulgarian}{indentfirst=true}
@@ -49,14 +51,15 @@
   morestring=[b]"""
 }[keywords,comments,strings]
 
-\definecolor{strings}{rgb}{0.6,0,0}
-\definecolor{comments}{rgb}{0.25,0.5,0.35}
-\definecolor{keywords}{rgb}{0.5,0,0.35}
-\definecolor{javadoc}{rgb}{0.25,0.35,0.75}
+\definecolor{normal}{rgb}{0.1, 0.1, 0.1}
+\definecolor{strings}{rgb}{0.4, 0, 0}
+\definecolor{comments}{rgb}{0.21, 0.425, 0.3}
+\definecolor{keywords}{rgb}{0, 0, 0}
+\definecolor{javadoc}{rgb}{0.25, 0.35, 0.75}
 
 \lstset{
   language=Scala,
-  basicstyle=\ttfamily\footnotesize,
+  basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont\color{normal},
   keywordstyle=\color{keywords}\bfseries,
   stringstyle=\color{strings},
   commentstyle=\color{comments},
@@ -68,7 +71,20 @@
   prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
 }
 
+\lstdefinestyle{listing}{
+  numbers=left,
+  numbersep=6pt,
+  numberstyle=\tiny
+}
+
+\renewcommand{\lstlistingname}{Листинг}
+\renewcommand{\lstlistlistingname}{Списък на листингите}
+
 \theoremstyle{definition}
 \newtheorem*{definition}{Дефиниция}
+
+\renewcommand{\umltextcolor}{black}
+\renewcommand{\umlfillcolor}{white}
+\renewcommand{\umldrawcolor}{black}
 
 \sloppy

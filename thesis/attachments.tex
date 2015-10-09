@@ -3,15 +3,89 @@
 \addcontentsline{toc}{chapter}{\nameref{sec:attachments}}
 
 \begin{attachment}{Имплементация на функционални структури.}
+  \label{att:fp}
   \filepath{source/functional}, пакет \code{functional}:
   
   \begin{itemize*}
-    \item \code{util.Option}, \code{util.Try}, \code{util.Either}, \code{util.Validation} — имплементация на разгледаните структури и добавянето им като монада/апликативен функтор.
+    \item \code{util.Option}, \code{util.Try}, \code{util.Either}, \code{util.Validation} — реализация на разгледаните структури и добавянето им като монада/апликативен функтор.
     
-    \item \code{Monoid}, \code{Applicative}, \code{Monad} — имплементация на разгледаните класове на типове.
+    \item \code{Monoid}, \code{Applicative}, \code{Monad} — реализация на разгледаните класове на типове.
     
     \item Пакет \code{expression_problem} — сравнение на подтиповия полиморфизъм със съпоставянето по образци.
     
     \item Пакет \code{json} — инструменти за JSON сериализация.
+  \end{itemize*}
+\end{attachment}
+
+\begin{attachment}{Имплементация на реактор и проактор}
+  \label{att:reactor-proactor}
+  \filepath{source/reactor-proactor}:
+  
+  \begin{itemize*}
+    \item Пакет \code{reactor.basic} — реализация на реактор:
+      \begin{itemize*}
+        \item \code{Reactor}, \code{TimeoutReactor}, \code{AsyncOperationReactor}, \code{ByteBufferPoolReactor} — имплементация съответно на основен реактор, реактор с таймаут операции, реактор, приемащ асинхронни операции, и реактор с множество буфери.
+         
+        \item \code{server.SingleReactorServer} и \code{server.WorkersServer} — сървъри съответно с единичен реактор и с множество реактори.
+         
+        \item Пакет \code{acceptor} — приемащи наблюдатели.
+      \end{itemize*}
+       
+    \item \code{EchoServer}, \code{WorkersEchoServer} и \code{EchoHandler} в пакет \code{reactor} — реализация на ехо сървъри чрез реактор(и).
+    
+    \item \code{IterateeHandler} в пакет \code{reactor} — реализация на реактивен наблюдител, който се връзва с двойка \englishterm{iteratee} и \englishterm{enumerator} за осъществяване на поточен и функционален вход изход изцяло през тях.
+    
+    \item \code{IterateeUppercaseEchoServer} в пакет \code{reactor} — реализация на ехо сървър, трансформиращ всички букви към главни, чрез поточен вход/изход, осигурен от \code{IterateeHandler}.
+    
+    \item Пакет \code{proactor.nio} — реализация на ехо сървър чрез проактора от \code{java.nio}.
+    
+    \item Пакет \code{proactor.reactor} — реализация на проактор чрез множество реактори. Събитйния диспечер и единствено абстрактен интерфейс може да бъде реализирам чрез различни асинхронни подходи, в зависимост от приложението.
+    
+    \item Пакет \code{proactor.actor} — реализация на проактор чрез актьори и проактора от \code{proactor.reactor}. Събитийният диспечер препраща събитията като съобщения към приемащи актьори.
+    
+    \item Пакет \code{parser} — интерфейс за автоматни парсъри и реализация на парсър на ASCII редове.
+    
+    \item Пакет \code{pool} — реализация на множество от буфери и на множество от връзки.
+  \end{itemize*}
+\end{attachment}
+
+\begin{attachment}{Имплементация на \englishterm{future} и \englishterm{promise}}
+  \label{att:future-promise}
+  \filepath{source/future}, пакет \code{future}:
+  
+  \begin{itemize*}
+    \item Пакет \code{single} — реализация на \englishterm{future} и \englishterm{promise} в единична среда.
+    
+    \item Пакет \code{concurrent} — реализация на среди и на \englishterm{future} и \englishterm{promise} в конкурентна многонишкова среда.
+  \end{itemize*}
+\end{attachment}
+
+\begin{attachment}{Имплементация на \englishterm{iteratee} потоци}
+  \label{att:iteratees}
+  \filepath{source/iteratee}, пакет \code{iteratee}:
+  
+  \begin{itemize*}
+    \item Пакет \code{simple} — синхронна реализация на \code{Iteratee}, \code{Enumerator} и \code{Enumeratee} и основни техни представители.
+    
+    \item Пакет \code{monadic} — монадни интерфейси за \code{Iteratee}, \code{Enumerator} и \code{Enumeratee} и функция за повдигане на синхронни \code{Iteratee} към монадни.
+    
+    \item Пакет \code{play} — включване на имплементацията на \code{Iteratee} и \code{Enumerator} в рамката Play към монадния клас на типове.
+  \end{itemize*}
+\end{attachment}
+
+\begin{attachment}{Имплементация на уеб сървъри}
+  \label{att:web-server}
+  \filepath{source/web-server}, пакет \code{http}:
+  
+  \begin{itemize*}
+    \item Обект \code{Http} — основни класове, изразяващи различни HTTP обекти.
+    
+    \item \code{HttpParser} — парсър на HTTP съобщения (заявки и отговори) чрез интерфейса от \code{reactor-proactor/parser}.
+    
+    \item \code{HttpMessageIteratee} — функционална и композитна реализация на парсър на HTTP съобщения чрез \code{Iteratee} потоци.
+    
+    \item Пакет \code{dsl} — Scala \englishterm{Domain Specific Language} за изграждане на бизнес логиката на Http сървъри за всеки техен път и предоставяне на \englishterm{callback} и \englishterm{future} контексти за трите сървърни реализации.
+    
+    \item Пакет \code{web_server} — реализация на реактивен, проактивен и многонишков уеб сървъри.
   \end{itemize*}
 \end{attachment}

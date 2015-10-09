@@ -63,3 +63,7 @@ trait MonadWithZero[F[_]] extends Monad[F] {
   def mzero[A]: F[A]
   def filter[A](m: F[A])(f: A => Boolean): F[A] = flatMap(m) { x => if (f(x)) unit(x) else mzero }
 }
+
+object MonadWithZero {
+  def filter[A, F[_]](ma: F[A])(f: A => Boolean)(implicit m: MonadWithZero[F]) = m.filter(ma)(f)
+}
