@@ -11,7 +11,7 @@ scalaSource in Test := baseDirectory.value / "test"
 resourceDirectory in Compile := baseDirectory.value / "resources"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play" % "2.4.3"
+  "com.typesafe.play" %% "play-iteratees" % "2.4.3"
 )
 
 resolvers ++= Seq(

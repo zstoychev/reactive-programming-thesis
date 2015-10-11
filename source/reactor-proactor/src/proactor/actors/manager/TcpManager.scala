@@ -10,10 +10,12 @@ class TcpManager extends Actor {
 
   def receive: Receive = {
     case Bind(address) =>
-      val bindActor = context.actorOf(Props(new TcpBindHandler(proactor, sender())))
+      val bindActor = context.actorOf(Props(
+        new TcpBindHandler(proactor, sender())))
       proactor.bind(address, bindActor)
     case Connect(address) =>
-      val tcpConnectionActor = context.actorOf(Props(new TcpConnectionHandler(sender())))
+      val tcpConnectionActor = context.actorOf(Props(
+        new TcpConnectionHandler(sender())))
       proactor.connect(address, tcpConnectionActor)
   }
 
@@ -25,7 +27,8 @@ class TcpBindHandler(proactor: Proactor[ActorRef], bindActor: ActorRef) extends 
 
   def receive: Receive = {
     case ProactorProtocol.Accepted(channel) =>
-      val tcpConnectionActor = context.actorOf(Props(new TcpConnectionHandler(bindActor)))
+      val tcpConnectionActor = context.actorOf(Props(
+        new TcpConnectionHandler(bindActor)))
       proactor.handle(channel, tcpConnectionActor)
     case ProactorProtocol.Closed => bindActor ! ProactorProtocol.Closed
     case Terminated(`bindActor`) => context.stop(self)

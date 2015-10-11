@@ -23,7 +23,8 @@ object HttpMessageIteratee {
   val headersIteratee: Iteratee[String, HttpHeaders] = {
     def step(headers: HttpHeaders): Input[String] => Iteratee[String, HttpHeaders] = {
       case El("") => Done(headers, Empty)
-      case El(HeaderFormat(key, value)) => Cont(step(headers + (key -> value)))
+      case El(HeaderFormat(key, value)) =>
+        Cont(step(headers + (key -> value)))
       case El(_) => Error(new ParseException("Invalid header"))
     }
     Cont(step(Map.empty))
@@ -31,7 +32,8 @@ object HttpMessageIteratee {
 
   def bytesIteratee(bytesCount: Int): Iteratee[Array[Byte], Array[Byte]] = {
     def step(body: Array[Byte]): Input[Array[Byte]] => Iteratee[Array[Byte], Array[Byte]] = {
-      case El(bytes) if body.length + bytes.length < bytesCount => Cont(step(Array.concat(bytes, body)))
+      case El(bytes) if body.length + bytes.length < bytesCount =>
+        Cont(step(Array.concat(bytes, body)))
       case El(bytes) =>
         val (last, rest) = bytes.splitAt(bytesCount - body.length)
         Done(Array.concat(body, last), El(rest))
@@ -42,10 +44,13 @@ object HttpMessageIteratee {
     Cont(step(Array.empty))
   }
 
-  def bodyIteratee(headers: HttpHeaders): Iteratee[Array[Byte], HttpBody] = {
-    val body = headers.get(Headers.ContentLengthHeader) map { _.toInt } map { bytesIteratee(_) }
-    if (body.isDefined) body.get map { bytes => HttpBody.Custom(headers.get(Headers.ContentTypeHeader), bytes) }
-    else Done(HttpBody.Empty, Empty)
+  def bodyIteratee(headers: HttpHeaders): Iteratee[Array[Byte],HttpBody] = {
+    headers.get(Headers.ContentLengthHeader)
+      .map { _.toInt }
+      .map { bytesIteratee(_) map { bytes =>
+        HttpBody.Custom(headers.get(Headers.ContentTypeHeader), bytes) }
+      }
+      .getOrElse(Done(HttpBody.Empty, Empty))
   }
 
   val httpRequestIteratee = for {

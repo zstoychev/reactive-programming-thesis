@@ -12,8 +12,8 @@ class EchoServerActor(port: Int) extends Actor {
   override def preStart(): Unit = TcpProactorExtension(context.system).tcpManager ! Bind(new InetSocketAddress(port))
 
   def receive: Receive = {
-    case Connected(connectionActor) =>
-      connectionActor ! Register(context.actorOf(Props(new EchoHandler(connectionActor))))
+    case Connected(connectionActor) => connectionActor ! Register(
+      context.actorOf(Props(new EchoHandler(connectionActor))))
     case Closed => context.stop(self)
   }
 }

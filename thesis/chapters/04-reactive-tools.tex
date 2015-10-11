@@ -350,22 +350,29 @@ object WebServerActions {
       largeResponse
     } ~
     get("/random") { (ctx, request) =>
-      HttpResponse(ok, Map.empty, HttpBody.Json(ThreadLocalRandom.current().nextInt()))
+      HttpResponse(ok, Map.empty, HttpBody.Json(
+        ThreadLocalRandom.current().nextInt()))
     } ~
     getAsync("/random-delayed") { (ctx, request) => handler =>
       ctx.afterTimeout(200.millis) {
-        handler(HttpResponse(ok, Map.empty, HttpBody.Json(ThreadLocalRandom.current().nextInt())))
+        handler(HttpResponse(ok, Map.empty, HttpBody.Json(
+          ThreadLocalRandom.current().nextInt())))
       }
     } ~
     getAsync("/sum-of-three-randoms") { (ctx, request) => handler =>
-      def retrieveNumber(response: Option[HttpResponse]) = response map { r => new String(r.body.data).toInt }
+      def retrieveNumber(response: Option[HttpResponse]) = response map {
+        r => new String(r.body.data).toInt }
       
       ctx.retrieve("localhost", 8001, "/random") { firstResponse =>
         ctx.retrieve("localhost", 8001, "/random") { secondResponse =>
           ctx.retrieve("localhost", 8001, "/random") { thirdResponse =>
-            Monad.sequence(List(firstResponse, secondResponse, thirdResponse) map retrieveNumber) map { _.sum } match {
-              case Some(sum) => handler(HttpResponse(ok, Map.empty, HttpBody.Json(sum)))
-              case None => handler(HttpResponse(serviceUnavailable, Map.empty, HttpBody.Empty))
+            Monad.sequence(List(firstResponse, secondResponse, thirdResponse)
+              .map(retrieveNumber)
+              .map { _.sum } match {
+                case Some(sum) => handler(HttpResponse(
+                  ok, Map.empty, HttpBody.Json(sum)))
+                case None => handler(HttpResponse(
+                  serviceUnavailable, Map.empty, HttpBody.Empty))
             }
           }
         }
@@ -977,7 +984,8 @@ class FutureActor extends Actor {
   import FutureActor._
   
   def receive: Receive = {
-    case Calculate(expression) => context.become(completed(Try(expression())))
+    case Calculate(expression) =>
+      context.become(completed(Try(expression())))
     case GetValueOnComplete => self.tell(GetValueOnComplete, sender)
   }
   
@@ -1006,6 +1014,7 @@ object Future {
 
 \begin{lstlisting}
 implicit val timeout = Timeout(5 seconds)
+
 val result: Future[Int] = (someActor ? CalculateResult(42)).mapTo[Int]
 \end{lstlisting}
 
@@ -1045,7 +1054,8 @@ val breaker = CircuitBreaker(system.scheduler,
 ...
 
 // При извикване на услугата
-val result: Future[Int] = breaker.withCircuitBreaker((serviceActor ? SomeMessage()).mapTo[Int])
+val result: Future[Int] = breaker.withCircuitBreaker(
+                            (serviceActor ? SomeMessage()).mapTo[Int])
 \end{lstlisting}
 
 Ако услугата е отзивчива и изпраща веднага отговор за грешка при натоварване, вместо да се изчаква таумаута да изтече, то прекъсвачат би се задействал още по-рано, с което да ограничи излишното натоварване към услугата, както и да уведоми потребителите още по-рано, тъй като те също очакват нашия резултат. Така реактивността на системата се разпространява през всички нейни части, но само ако и те са реактивни.
@@ -1198,7 +1208,8 @@ val sum = fold[Int, Int](0)(_ + _)
 
 def take[A](n: Int): Iteratee[A, List[A]] = {
   def step(elements: List[A]): Input[A] => Iteratee[A, List[A]] = {
-    case El(e) if elements.size == n - 1 => Done((e :: elements).reverse, Empty)
+    case El(e) if elements.size == n - 1 =>
+      Done((e :: elements).reverse, Empty)
     case El(e) => Cont(step(e :: elements))
     case Empty => Cont(step(elements))
     case EOF => Done(elements.reverse, EOF)
@@ -1235,11 +1246,13 @@ object Enumerator {
   def apply[T](values: T*) = new Enumerator[T] {
     @tailrec
     private def enumerate[O](values: Seq[T], iteratee: Iteratee[T, O]): Iteratee[T, O] = iteratee match {
-      case Cont(k) if !values.isEmpty => enumerate(values.tail, k(El(values.head)))
+      case Cont(k) if !values.isEmpty =>
+        enumerate(values.tail, k(El(values.head)))
       case _ => iteratee
     }
   
-    def apply[O](iteratee: Iteratee[T, O]): Iteratee[T, O] = enumerate(values, iteratee)
+    def apply[O](iteratee: Iteratee[T, O]): Iteratee[T, O] =
+      enumerate(values, iteratee)
   }
 }
 
@@ -1269,7 +1282,8 @@ sealed trait Iteratee[I, +O] {
   
   def flatMap[B](f: O => Iteratee[I, B]): Iteratee[I, B] = this match {
     case Done(value, rest) => f(value) match {
-      case Done(_, El(_)) => Error(new IllegalStateException("Invalid initial iteratee state"))
+      case Done(_, El(_)) => Error(
+        new IllegalStateException("Invalid initial iteratee state"))
       case Done(valueB, _) => Done(valueB, rest)
       case Cont(k) => k(rest)
       case Error(e) => Error(e)
@@ -1330,7 +1344,8 @@ trait Enumerator[I] { self =>
     def apply[O](iteratee: Iteratee[T, O]): Iteratee[T, O] = self(enumeratee(iteratee)).end match {
       case Done(i, _) => i
       case Error(e) => Error(e)
-      case _ => Error(new IllegalStateException("Unexpected Enumeratee state"))
+      case _ => Error(
+        new IllegalStateException("Unexpected Enumeratee state"))
     }
   }
 }
@@ -1369,14 +1384,16 @@ Enumerator(1, 2, 3, 4, 5) |>> map[Int, Int](_ * 2) &>> (filter[Int](_ > 2) &>> I
 
 \begin{lstlisting}
 val asciiLineChunked: Iteratee[Array[Byte], String] = {
-  def toString(chunks: List[Array[Byte]]) = new String(Array.concat(chunks.reverse: _*), "US-ASCII")
+  def toString(chunks: List[Array[Byte]]) = new String(
+    Array.concat(chunks.reverse: _*), "US-ASCII")
   
   def step(chunks: List[Array[Byte]]): Input[Array[Byte]] => Iteratee[Array[Byte], String] = {
     case Empty => Cont(step(chunks))
     case EOF => Done(toString(chunks), EOF)
     case El(chars) => chars.span(_ != '\n') match {
       case (_, Array()) => Cont(step(chars :: chunks))
-      case (lineEnd, rest) => Done(toString(lineEnd :: chunks), El(rest.tail))
+      case (lineEnd, rest) =>
+        Done(toString(lineEnd :: chunks), El(rest.tail))
     }
   }
   Cont(step(List.empty))
@@ -1424,7 +1441,8 @@ object Iteratee {
   (implicit m: Monad[F]): Iteratee[I, O, F] = iteratee match {
     case simple.Done(value, rest) => Iteratee(Done(value, rest))
     case simple.Error(e) => Iteratee(Error(e))
-    case simple.Cont(k) => Iteratee(Cont(input => liftSimpleIteratee(k(input))))
+    case simple.Cont(k) => Iteratee(
+      Cont(input => liftSimpleIteratee(k(input))))
   }
 }
 \end{lstlisting}
@@ -1440,7 +1458,8 @@ case class Cont[E, +A](k: Input[E] => Iteratee[E, A]) extends Step[E, A]
 case class Error[E](msg: String, input: Input[E]) extends Step[E, Nothing]
 
 trait Iteratee[E, +A] {
-  def fold[B](folder: Step[E, A] => Future[B])(implicit ec: ExecutionContext): Future[B]
+  def fold[B](folder: Step[E, A] => Future[B])
+             (implicit ec: ExecutionContext): Future[B]
 }
 
 trait Enumerator[E] {
@@ -1464,7 +1483,7 @@ trait Enumeratee[From, To] {
   caption={Функционален парсър на HTTP съобщения}
 ]{../source/web-server/src/http/HttpMessageIteratee.scala}
 
-В имплементацията парсването ясно се разделя на парсване на началния ред, парсване на \englishterm{header} стойностите и парсване на тялото на съобщението, които комбинирани заедно дават HTTP съобщение. Първите две разглеждат входа като ASCII редове, докато парсването на тялото директно чете байтовете.
+В имплементацията парсването ясно се разделя на парсване на началния ред, парсване на \englishterm{header} стойностите и парсване на тялото на съобщението, които комбинирани заедно дават HTTP съобщение (редове 49 до 59). Първите две разглеждат входа като ASCII редове, докато парсването на тялото директно чете байтовете.
 
 \subsubsection{Връзка с външен вход/изход. Връзка с актьори}
 
@@ -1507,7 +1526,7 @@ object IterateeUppercaseEchoServer {
 \subsection{Реактивни потоци с обратен натиск}
 \label{sec:reactive-streams-with-backpressure}
 
-\englishterm{Reactive streams} \cite{reactiveStreamsSpecification2015} е инициатива на организациите \englishterm{Typesafe, Twitter, Netflix, Red Hat} и др. от 2014-та и 2015-та година за стандартизиране на общ интерфейс между различни асинхронни поточни имплементации върху публикуващ (\englishterm{push}) модел с явна поддръжка на контролиране на потока от консуматора чрез обратен натиск по извличащ (\englishterm{pull}) модел. Интерфейсът е на ниско ниво, базиран на \englishterm{publish-subscribe} подход и използващ \englishterm{callback} механизъм. Целта на това е лесно да може да бъде имплементиран от различните библиотеки. \shortlabeledref{Фигура}{fig:reactive-streams} представа компонентите на Java спецификацията.
+\englishterm{Reactive streams} \cite{reactiveStreamsSpecification2015} е инициатива на организациите \englishterm{Typesafe, Twitter, Netflix, Red Hat} и др. от 2014-та и 2015-та година за стандартизиране на общ интерфейс между различни асинхронни поточни имплементации върху публикуващ (\englishterm{push}) модел с явна поддръжка на контролиране на потока от консуматора чрез обратен натиск по извличащ (\englishterm{pull}) модел. Интерфейсът е на ниско ниво, базиран на \englishterm{publish-subscribe} подход и използващ \englishterm{callback} механизъм. Целта на това е лесно да може да бъде имплементиран от различните библиотеки. \shortlabeledref{Фигура}{fig:reactive-streams} представя компонентите на Java спецификацията.
 
 \begin{figure}
   \centering\includegraphics[width=\textwidth]{images/reactive-streams.pdf}

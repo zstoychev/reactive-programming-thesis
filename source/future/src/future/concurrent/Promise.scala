@@ -56,7 +56,8 @@ class Promise[T] {
       else throw new TimeoutException
     }
 
-    def result(atMost: Duration)(implicit permit: CanAwait): T = ready(atMost).value.get.get
+    def result(atMost: Duration)(implicit permit: CanAwait): T =
+      ready(atMost).value.get.get
   }
 
   def complete(value: Try[T]): Promise[T] = {
