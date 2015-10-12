@@ -1,0 +1,37 @@
+\documentclass[a4paper, 12pt]{article}
+
+\usepackage{titling}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\usepackage[backend=bibtex, style=numeric, sorting=none, language=british]{biblatex}
+\usepackage[vmargin=1in, hmargin=1.20in]{geometry}
+
+\setmainfont[Ligatures=TeX]{Liberation Serif}
+\setsansfont{Liberation Sans}
+\setmonofont{Liberation Mono}
+
+\setmainlanguage{english}
+
+\setlength{\droptitle}{-10em}
+
+\title{Using the Principles of Reactive and Functional Programming for Building Scalable and Resilient Software Applications}
+\author{Zdravko Stoychev Stoychev — FN M23673}
+\date{12th of October 2015 г.}
+
+\begin{document}
+  \pagenumbering{gobble}
+  \maketitle
+  
+  \begin{center}
+    \large Abstract
+    \vspace{0.2em}
+  \end{center}
+
+  In recent years the number of Internet users and Internet-enabled devices grows exponentially. With that the load and the requirements towards the software systems grows a lot. On the other hand the most popular software architectures among the software developers are based on a monolithic model, using synchronous calls and strong consistency. The systems that are based on these architectures can’t cope with the load. They don’t utilize effectively the resources they have, are hard to scale on multicore and distributed systems and often can be down because of unexpected failures.
+  
+  This thesis presents a different model—the one of the reactive programming, which aims to solve these problems. The thesis starts with a thorough review of the monolithic architectures, presenting their problems, both on conceptual and implementational level. These problems are compared to the tenets of the reactive programming by presenting how they better model the physical world by accepting its indeterminism and lack of total consistency. The aim of these systems is achieving responsiveness to their users, even in the face of failures. At the same time the thesis presents the functional programming and the lingual and the conceptual means that it offers for restricting that indeterminism and the complexity it generates. For that the functional programming uses immutable data and high-level composable abstractions.
+  
+  The way to implement reactive systems is by combining different reactive tools and patterns. Such tools are for example the reactor and proactor patterns, the future and promise abstractions, the actor model, various ways for implementing flowing data, etc. All of them are analyzed in detail for how do they implement the reactive principles, which parts of a reactive system can be constructed by them, how do they combine together, as well as how can they be implemented efficiently, in harmony with the functional principles. Concrete implementations are presented for some of them.
+  
+  In the end the thesis offers a concrete architecture that is implemented using the reactive tools and is suitable for middle-sized systems. It achieves scalable and resilient domain aggregates by using command-query segregation and event sourcing and offers eventually-consistent views. The architecture is then implemented by an example application that is scalable and resilient.
+\end{document} 
