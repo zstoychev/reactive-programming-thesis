@@ -14,9 +14,9 @@
 
 \subsection{Работници}
 
-Нека дефинираме обща схема за управление на работа от изчислителните възли. Работата ще бъде извършвана от специални актьори, наречени работници. На всеки от изчислителните ресурси, за всеки тип изчислителни задачи, ще имаме главен актьор за задачата \code{Master} и съответни му няколко работника \code{Worker}, които той управлява. Когато очакваме задачи, които натоварват изчислителните ресурси, то броят на тези работници трябва да се избере само броя на ядрата на системата.
+Нека дефинираме обща схема за управление на работа от изчислителните възли. Работата ще бъде извършвана от специални актьори, наречени работници. На всеки от изчислителните ресурси, за всеки тип изчислителни задачи, ще имаме главен актьор за задачата, \code{Master}, и съответни му няколко работника \code{Worker}, които той управлява. Когато очакваме задачи, които натоварват изчислителните ресурси, то броят на тези работници трябва да се избере спрямо броя на ядрата на системата.
  
-От главния актьор ще искаме няколко неща. Първо той трябва да управлява задачите, да ги разпределя по работниците и да следи за тяхното изпълнение. Второ, ще искаме да балансираме максимално работата между работниците, като се предпазим от това, ако задачите за изпълнение идват с по-бързо темпо от изпълнението им да не се запълни паметта на системата. За целта няма да препращаме всяка пристигнала задача веднага на работниците, ами ще ги съхраняваме в \emph{явна ограничена опашка}. При пристигане на съобщения при препълнена опашка веднага ще изпращаме съобщения за грешка на изпращача.
+От главния актьор ще искаме няколко неща. Първо той трябва да управлява задачите, да ги разпределя по работниците и да следи за тяхното изпълнение. Второ, ще искаме да балансираме максимално работата между работниците, като се предпазим от опасността да се запълни паметта на системата, ако задачите за изпълнение идват с по-бързо темпо от изпълнението им. За целта няма да препращаме всяка пристигнала задача веднага на работниците, ами ще ги съхраняваме в \emph{явна ограничена опашка}. При пристигане на съобщения при препълнена опашка веднага ще изпращаме съобщения за грешка на изпращача.
 
 Можем да дефинираме следния протокол за комуникация на главния актьор с останалите участници:
 
@@ -29,7 +29,7 @@ case class ProcessFailed(data: WorkData, startTime: Long, reason: Throwable)
 case object WorkerReady
 \end{lstlisting}
 
-За връщане на изчисления резултат на изпращачите ще използваме \code{Try} съобщения. Имплементацията на работниците е елементарна:
+За връщане на изчисления резултат на изпращачите ще използваме \code{Try} съобщения. Имплементацията на работниците е кратка:
 
 \begin{lstlisting}
 trait Worker extends Actor {
@@ -42,10 +42,10 @@ trait Worker extends Actor {
   
   def receive: Receive = {
     case p@ProcessData(data, startTime) =>
-    doWork(p)
-    .map { DataProcessed(data, startTime, _) }
-    .recover { case NonFatal(e) => ProcessFailed(data, startTime, e) }
-    .pipeTo(context.parent)
+      doWork(p)
+        .map { DataProcessed(data, startTime, _) }
+        .recover { case NonFatal(e) => ProcessFailed(data, startTime, e) }
+        .pipeTo(context.parent)
   }
 }
 \end{lstlisting}
@@ -53,7 +53,9 @@ trait Worker extends Actor {
 По интересен е главният актьор:
 
 \begin{lstlisting}
-class Master(val statsMonitor: ActorRef)(worker: Props, val numberOfWorkers: Int) extends Actor with ProcessTimeTicker {
+class Master(val statsMonitor: ActorRef)
+            (worker: Props, val numberOfWorkers: Int)
+            extends Actor with ProcessTimeTicker {
   import Master._
   
   var pendingWorkers = Queue.empty[ActorRef]
@@ -90,7 +92,7 @@ class Master(val statsMonitor: ActorRef)(worker: Props, val numberOfWorkers: Int
 
 Той създава и управлява неговите работници. Подразбиращата се схема на \code{supervising} му позволява работниците да се рестартират автоматично, когато някой от тях даде грешка. Допълнителното нещо, което виждаме за главния актьор. е следенето на статистика за неговата комуникация чрез методи на \code{ProcessTimeTicker}. Повече за това ще видим в по-следващата секция.
 
-Остава да имплементираме конкретен работник, който да изпълнява JavaScript кода. За целта ще използваме имплемантацията \code{Nashorn}, предоставена от Java 8, която е и подходящо защитена среда. Към всеки код, който ще бъде изпълнен, ще добавим и методи, чрез които той може да уведоми клиента с междинен резултат (\code{notify}) както и да приспи текущата нишка за известно време (\code{sleep}). Кодът на работника може да се види в \shortlabeledref{приложение}{att:reactive-application}. Реализацията използва отделна среда за изпълнени на операциите за да не се натовари средата на останалите актьори в системата.
+Остава да имплементираме конкретен работник, който да изпълнява JavaScript кода. За целта ще използваме имплемантацията \code{Nashorn}, предоставена от Java 8, която е и подходящо защитена среда. Към всеки код, който ще бъде изпълнен, ще добавим и методи, чрез които той може да уведоми клиента с междинен резултат от изчислението (\code{notify}), както и да приспи текущата нишка за известно време (\code{sleep}). Кодът на работника може да се види в \shortlabeledref{приложение}{att:reactive-application}. Реализацията използва отделна среда за изпълнени на операциите за да не се натовари средата на останалите актьори в системата.
 
 Така можем да стартираме тази система на изчислителните възли:
 
@@ -148,6 +150,7 @@ class CodeProcessor @Inject() (@Named("codeProcessingRouter") codeProcessingRout
   def processCode = WebSocket.acceptWithActor[String, String] {
     request => out =>
     Props(new CodeProcessorActor(codeProcessingRouter, out))
+  }
 }
 \end{lstlisting}
 
@@ -176,11 +179,11 @@ class CodeProcessor @Inject() (@Named("codeProcessingRouter") codeProcessingRout
   
   \item трябва да можем да осъществим връзка с агрегат/изглед само по подаден идентификатор, независимо от неговото местоположение;
   
-  \item при отказ на актьора или възела, при частично деление на мрежата или при друг проблем, ще искаме той да може да се стартира на друго местоположение от данните, записани в базата от данни;
+  \item при отказ на актьора или възела, при частично деление на мрежата или при друг проблем, ще искаме той да може да се стартира на друго местоположение, използвайки данните, записани в базата от данни;
   
-  \item ще искаме при неактивност агрегата да се самоизключва за да не хаби памет и ресурси. При поискване трябва да може да се зареди от състоянието в базата.
+  \item ще искаме при неактивност агрегата да се самоизключва за да не хаби памет и ресурси. При поискване трябва да може да се зареди от състоянието си в базата.
   
-  \item Докато е активен всички данни се кешират в актьора, се осигурява и техния запис в базата. Така данните са налични много през актьора, но и съхранени сигурно.
+  \item Докато е активен всички данни се кешират в актьора, като се осигурява и техния запис в базата. Така данните са налични ефективно през актьора, но и съхранени сигурно.
 \end{itemize*}
 
 Оказва се, че Akka имплементира различни шаблони, чрез които могат да се постигнат именно тези свойства. Всички те са възможни именно благодарение на съобщенията и тяхната асинхронност и целеустремеността към реактивните принципи.
@@ -210,7 +213,8 @@ case class RemovePollAnswer(id: Int) extends PollCommand
 
 sealed trait PollEvent
 case class PollStarted(id: String, options: List[String]) extends PollEvent
-case class PollAnswered(id: Int, name: String, optionsAnswers: List[Boolean]) extends PollEvent
+case class PollAnswered(id: Int, name: String,
+                        optionsAnswers: List[Boolean]) extends PollEvent
 case class PollAnswerUpdated(id: Int, optionsAnswers: List[Boolean]) extends PollEvent
 case class PollAnswerRemoved(id: Int) extends PollEvent
 
@@ -232,17 +236,19 @@ val polls = ClusterSharding(system).start(
   )),
   settings = ClusterShardingSettings(system),
   extractEntityId = PollActor.extractEntityId,
-  extractShardId = PollActor.extractShardId)
+  extractShardId = PollActor.extractShardId
+)
 \end{lstlisting}
 
-Такива типове актьори трябва да бъдат създадени за всеки от възможните типове агрегати и изгледи. \code{extractEntityId} определя как от съобщение, пратено на актьора \code{polls}, се извежда идентификатора на актьора, за да може то да бъде доставено и евентуално актьорът създаден. Ще използваме двойка (идентификатор, съобщение).
+Такива типове актьори трябва да бъдат създадени за всеки от възможните типове агрегати и изгледи. \code{extractEntityId} определя как от съобщение, пратено на актьора \code{polls}, се извежда идентификатора на актьора, за да може то да бъде доставено и евентуално актьорът създаден. Ще използваме двойки (идентификатор, съобщение).
 
-Нашите актьори са персистентни, което значи, че всички зависят от нея и биха отказали едновременно, ако се получи неѝн отказ при например натоварване. Ако след това всички веднага се опитат да достъпят базата отново, то това единствено би я натоварило още повече. Затова имплементираме обхващащ актьор \code{ShardedEntityWithBackoff}, който добавя специален \englishterm{supervisor}. При грешки той не рестартира веднага актьора, а опитва да го направи на постепенно увеличаващи се интервали, отместени с определен случаен фактор, за да се намали вероятността няколко актьора едновременно да достъпят базата. Така получаваме устойчивост, следвайки принципите, за които говорихме и при шаблона прекъсвач на верига.
+Нашите актьори са персистентни, което значи, че всички зависят от базата и биха отказали едновременно, ако се получи неѝн отказ при например натоварване. Ако след това всички веднага се опитат да достъпят базата отново, то това единствено би я натоварило още повече. Затова имплементираме обхващащ актьор \code{ShardedEntityWithBackoff}, който добавя специален \englishterm{supervisor}. При грешки той не рестартира веднага актьора, а опитва да го направи на постепенно увеличаващи се интервали, отместени с определен случаен фактор, за да се намали вероятността няколко актьора едновременно да достъпят базата. Така получаваме устойчивост, следвайки принципите, за които говорихме и при шаблона прекъсвач на верига.
 
 Един персистентен актьор изглежда по следния начин:
 
 \begin{lstlisting}[style=listing, caption={Персистентен актьор за анкета}]
-class PollActor(id: String, passivator: ActorRef, pollViews: ActorRef) extends PersistentActor {
+class PollActor(id: String, passivator: ActorRef,
+                pollViews: ActorRef) extends PersistentActor {
   import PollState._
   import Protocol._
   val SnapshotTarget = 20
@@ -253,8 +259,10 @@ class PollActor(id: String, passivator: ActorRef, pollViews: ActorRef) extends P
   
   context.setReceiveTimeout(2.minutes)
   
-  def behaviour(state: Receive) = state orElse passivate orElse invalidCommand
-  def complete(event: PollEvent, reply: Any, newState: => Receive) = persist(event) { event =>
+  def behaviour(state: Receive) =
+    state orElse passivate orElse invalidCommand
+  def complete(event: PollEvent, reply: Any,
+               newState: => Receive) = persist(event) { event =>
     state = updateState(state, event)
     if (lastSequenceNr % SnapshotTarget == 0) saveSnapshot(state)
     context.become(newState)
@@ -264,26 +272,36 @@ class PollActor(id: String, passivator: ActorRef, pollViews: ActorRef) extends P
   def receiveCommand: Receive = behaviour(notStarted)
   
   def notStarted: Receive = {
-    case StartPoll(options) => complete(PollStarted(id, options), StartPollAck(id), behaviour(started(state.get)))
+    case StartPoll(options) =>
+      complete(PollStarted(id, options),
+               StartPollAck(id),
+               behaviour(started(state.get)))
   }
   
   def started(ps: PollState): Receive = {
-    case AnswerPoll(name, optionsAnswers) if ps.poll.options.size != optionsAnswers.size =>
+    case AnswerPoll(name, optionsAnswers)
+      if ps.poll.options.size != optionsAnswers.size =>
       sender() ! InvalidState
     case AnswerPoll(name, optionsAnswers) =>
       val answerId = ps.totalAnswers + 1
-      complete(PollAnswered(answerId, name, optionsAnswers), AnswerPollAck(answerId), behaviour(started(state.get)))
+      complete(PollAnswered(answerId, name, optionsAnswers),
+               AnswerPollAck(answerId),
+               behaviour(started(state.get)))
     
     case UpdatePollAnswer(id, optionsAnswers)
       if ps.poll.options.size != optionsAnswers.size || !ps.poll.answers.exists(_.id == id) =>
       sender() ! InvalidState
     case UpdatePollAnswer(id, optionsAnswers) =>
-      complete(PollAnswerUpdated(id, optionsAnswers), UpdatePollAnswerAck, behaviour(started(state.get)))
+      complete(PollAnswerUpdated(id, optionsAnswers),
+               UpdatePollAnswerAck,
+               behaviour(started(state.get)))
     
     case RemovePollAnswer(id) if !ps.poll.answers.exists(_.id == id) =>
       sender() ! InvalidState
     case RemovePollAnswer(id) =>
-      complete(PollAnswerRemoved(id), RemovePollAnswerAck, behaviour(started(state.get)))
+      complete(PollAnswerRemoved(id),
+               RemovePollAnswerAck,
+               behaviour(started(state.get)))
   }
   
   def passivate: Receive = {
@@ -299,7 +317,8 @@ class PollActor(id: String, passivator: ActorRef, pollViews: ActorRef) extends P
   
   def receiveRecover: Receive = {
     case event: PollEvent => state = updateState(state, event)
-    case SnapshotOffer(_, snapshot) => state = snapshot.asInstanceOf[Option[PollState]]
+    case SnapshotOffer(_, snapshot) =>
+      state = snapshot.asInstanceOf[Option[PollState]]
     case RecoveryCompleted => context.become(state match {
       case Some(ps) => behaviour(started(ps))
       case None => behaviour(notStarted)
@@ -308,13 +327,13 @@ class PollActor(id: String, passivator: ActorRef, pollViews: ActorRef) extends P
 }
 \end{lstlisting}
 
-Всеки актьор предоставя \code{persistenceId}, което определя неговия идентификатор в базата. Съобщенията в актьора се разделят на два пътя — \code{receiveCommand} и \code{receiveRecover}. Първото поведение се използва при нормална работата на актьора, когато той получава команди. Второто поведение е за когато той се възстановява от базата. Тогава той получава събитията едно по едно, според което трябва да обнови своето състояние. Ако е налична снимка на състоянието, то актьорът първо се възстановява от нея (ред 58), след като биват предадени останалите събития.
+Всеки актьор предоставя \code{persistenceId}, което определя неговия идентификатор в базата. Съобщенията в актьора се разделят на два пътя — \code{receiveCommand} и \code{receiveRecover}. Първото поведение се използва при нормална работата на актьора, когато той получава команди. Второто поведение е за когато той се възстановява от базата. Тогава той получава събитията едно по едно, според което трябва да обнови своето състояние. Ако е налична снимка на състоянието, то актьорът първо се възстановява от нея (ред 71), след което биват предадени последващите събития.
 
-При нормална работа актьорът приема команди и запазва съответните им събития едно по едно. По подразбиране следващата команда не може да пристигне, преди предишна да е била записана. След записа се обновява състоянието и се уведомяват изгледите чрез \code{Update} съобщение (редове от 13 до 17). Освен това актьорът прави валидация на съобщенията и отхвърля тези, които биха довели до невалидно състояние.
+При нормална работа актьорът приема команди и запазва съответните им събития едно по едно. По подразбиране следващата команда не може да пристигне, преди предишна да е била записана. След записа се обновява състоянието и се уведомяват изгледите чрез \code{Update} съобщение (редове от 15 до 21). Освен това актьорът прави валидация на съобщенията и отхвърля тези, които биха довели до невалидно състояние.
 
-На всеки две минути на неактивност, което се конфигурира на ред 10, актьорът изпраща специално съобщение за това, че желае да спре с цел да не хаби ресурси (\code{Passivate}, последвано от \code{Stop}).
+На всеки две минути на неактивност, което се конфигурира на ред 11, актьорът изпраща специално съобщение за това, че желае да спре с цел да не хаби ресурси (\code{Passivate}, последвано от \code{Stop}).
 
-Можем да забележим, че актьорът може да бъде стартиран дори и за несъществуващи агрегати, тоест за несъществуващ идентификатор. Тогава обаче, ако той не получи команда за създаване (ред 23), той автоматично ще отговаря със съобщение за невалидно състояние на всяко друго съобщение и след 2 минути неактивност ще се унищожи без никакви следи в базата.
+Можем да забележим, че актьорът може да бъде стартиран дори и за несъществуващи агрегати, тоест за несъществуващ идентификатор. Тогава обаче, ако той не получи команда за създаване (ред 26), той автоматично ще отговаря със съобщение за невалидно състояние на всяко друго съобщение и след 2 минути неактивност ще се унищожи без никакви следи в базата.
 
 \subsection{Заявки и изгледи}
 
@@ -336,7 +355,8 @@ class PollViewActor(id: String, passivator: ActorRef) extends PersistentView {
   
   def receive: Receive = passivate orElse {
     case event: PollEvent => state = updateState(state, event)
-    case SnapshotOffer(_, stateSnapshot) => state = stateSnapshot.asInstanceOf[Option[PollState]]
+    case SnapshotOffer(_, stateSnapshot) =>
+      state = stateSnapshot.asInstanceOf[Option[PollState]]
     case QueryPoll(streaming) => state match {
       case Some(pollState) =>
         sender() ! pollState.poll
@@ -363,7 +383,7 @@ class PollViewActor(id: String, passivator: ActorRef) extends PersistentView {
 
 Изгледите, предоставени в текущата версия на Akka, са силно ограничени по това, че могат да наблюдават събитията само на един агрегат. При стандартен \code{event sourcing} те трябва да могат да се регистрират за всякакви събития. По-късно в секцията ще имплементираме именно такъв агрегиращ изглед.
 
-Изгледите в Akka четат събитията, записани в базата, чрез периодично извличане на определен интервал. Освен това могат да бъдат накарани да ги извлекат веднага чрез \code{Update} съобщение. Тяхното \code{receive} поведение получава новите събития, както и заявки за данните. Тук актьорът позволява на клиентите да се регистрират за поток от промени. Тези регистрации обаче ще бъдат изгубени, ако той бъде рестартиран. Затова ако има регистрирани клиент той изключва автоматичното си спиране след период на неактивност. Той все още може да бъде изключен поради повреда. Поради това наблюдаващите клиенти трябва също да регистрират \code{context.watch} наблюдение над изгледа, за да знаят в какво състояние са и да се пререгистрират при нужда.
+Изгледите в Akka четат събитията, записани в базата, чрез периодично извличане на определен интервал. Освен това могат да бъдат накарани да ги извлекат веднага чрез \code{Update} съобщение. Тяхното \code{receive} поведение получава новите събития, както и заявки за данните. Тук актьорът позволява на клиентите да се регистрират за поток от промени. Тези регистрации обаче ще бъдат изгубени, ако той бъде рестартиран. Затова ако има регистрирани клиент той изключва автоматичното си спиране поради период на неактивност. Той все още може да бъде изключен поради повреда. Поради това наблюдаващите клиенти трябва също да регистрират \code{context.watch} наблюдение над изгледа, за да знаят в какво състояние са и да се пререгистрират при нужда.
 
 За да изградим изгледи върху няколко агрегата е необходимо единичните изгледи да препращат събитията към интересуващи се актьори. Така например може да се реализира \englishterm{singleton} (\shortlabeledref{секция}{sec:singleton-actors-elasticity}) изглед, броящ всички чат съобщения в системата:
 
@@ -397,9 +417,11 @@ class TotalChatMessagesView extends PersistentActor {
 \englishterm{Frontend} възлите автоматично комуникират през прокси с агрегатите на \englishterm{backend} възлите. Командите минават през стандартни REST пътища:
 
 \begin{lstlisting}
-class Polls @Inject() (@Named("polls") polls: ActorRef, @Named("pollsChats") pollsChats: ActorRef,
-@Named("pollsViews") pollsViews: ActorRef, @Named("pollsChatViews") pollsChatViews: ActorRef)
-extends Controller {
+class Polls @Inject() (@Named("polls") polls: ActorRef,
+                       @Named("pollsChats") pollsChats: ActorRef,
+                       @Named("pollsViews") pollsViews: ActorRef,
+                       @Named("pollsChatViews") pollsChatViews: ActorRef)
+                       extends Controller {
   implicit val timeout = Timeout(4.seconds)
   
   def handlePollAck(ack: Future[Any]) = {
@@ -418,9 +440,11 @@ extends Controller {
     val id = UUID.randomUUID.toString
     
     Future.sequence(List(
-    polls ? (id, request.body),
-    pollsChats ? (id, InitializePollChat)
-    )) flatMap { case List(pollAck, _) => handlePollAck(Future.successful(pollAck)) }
+      polls ? (id, request.body),
+      pollsChats ? (id, InitializePollChat)
+    )) flatMap { case List(pollAck, _) =>
+      handlePollAck(Future.successful(pollAck))
+    }
   }
   
   def answerPoll(id: String) =  Action.async(parse.json[AnswerPoll]) { request =>
@@ -432,7 +456,7 @@ extends Controller {
 
 Листингът показва част от кода на \englishterm{frontend} контролера, като на всеки REST път е съпоставено определено действие. Асинхронните действия в Play връщат функционални \englishterm{future} обекти. Тук можем да видим как тези действия, както и командите, които описахме по-рано, не са само CRUD глаголи, а вече носят семантиката за действията — стартиране (а не създаване) на анкета, попълване/отговаряне на анкета (а не създаване на запис за попълнени данни). Чрез тези подходи се доближаваме до Domain-Driven Design \cite{evans2003DDD}.
 
-Друга много важна особеност тук е \emph{времеограничението, което слагаме на заявките}. Тук очакване те да дойдат бързо и ако това не се получи генерираме грешка за \code{ServiceUnavailable}.
+Друга много важна особеност тук е \emph{времеограничението, което слагаме на заявките}. Тук очакваме те да бъдат отговаряни бързо и ако това не се получи генерираме грешка за \code{ServiceUnavailable}.
 
 Контролерът дефинира и два потока — на промени по анкетите и на чат съобщения, реализирани чрез актьори, които могат да бъдат разгледани в приложението.
 
@@ -446,7 +470,9 @@ extends Controller {
 
 Реактивните системи се базират на добре познатите ни софтуерни принципи, като слаба свързаност, единична отговорност на компонентите, и други. Това отваря много възможности за тяхното тестване, както модулно, така и интеграционно или системно, които са допълнително улеснени от минималното споделено състояние.
 
-Функционалните абстракции са най-лесно тестваеми, базирани на подаден вход и очакван изход. Абстракциите, като асинхронните \englishterm{future} обекти, които могат да съдържат странични ефекти, могат да бъдат заменени от напълно детерминистична тяхна версия (като \code{Future.successful}). При интеграционни тестове на коректността със странични ефекти може да се използват блокиращите примитиви, които представихме в \shortlabeledref{секция}{sec:concurrent-future-and-promise}. Това подпомага тяхното гранулярно използваме, каквото имаме при тестването. Всеки актьор реално се реализира чрез синхронни ООП обекти, което позволява да бъде тестван техния клас без да е необходима асинхронност.
+Функционалните абстракции са най-лесно тестваеми, базирани на подаден вход и очакван изход. Абстракциите, като асинхронните \englishterm{future} обекти, които могат да съдържат странични ефекти, могат да бъдат заменени от напълно детерминистична тяхна версия (като \code{Future.successful}). При интеграционни тестове на коректността заедно със странични ефекти може да се използват блокиращите примитиви, които представихме в \shortlabeledref{секция}{sec:concurrent-future-and-promise}. Това подпомага тяхното гранулярно използване, каквото имаме при тестването.
+
+При Akka всеки актьор реално се реализира чрез синхронни ООП обекти, което позволява да бъде тестван техния клас без да е необходима асинхронност.
 
 Най-много грешки се проявяват обаче при комуникация и затова в Akka и другите библиотеки се предоставят инструменти за лесно интеграционно тестване. Това включва и възможности за тестване върху няколко виртуални машини на Java, тъй като голяма част от комуникацията е между възли. За системите е характерно множество ограничени времева за отговор, които е добре да бъдат изключени по време на тестване. Повечето библиотеки разширяват познатите ни модулни тестове за различни сценарии.
 
