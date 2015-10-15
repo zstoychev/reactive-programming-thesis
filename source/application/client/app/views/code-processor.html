@@ -1,0 +1,21 @@
+<div>
+  <h1>Code processor</h1>
+
+  <div>
+    <div><label>Enter code:</label></div>
+    <div>(can call the function <code>notify</code> for sending messages to self)</div>
+    <div><textarea ng-model="code"></textarea></div>
+  </div>
+
+  <div><button ng-click="processCode()" ng-disabled="isProcessing">Execute</button></div>
+
+  <div>Final result: {{ result }}</div>
+  <div>Required parallelism: {{ parallelism }}</div>
+
+  <div ng-if="messages.length > 0">
+    <div>Messages:</div>
+    <div>
+      <pre ng-repeat="message in messages">{{ message.data }}</pre>
+    </div>
+  </div>
+</div>
