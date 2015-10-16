@@ -1,16 +1,13 @@
 package reactivethesis.poll.actors
 
-import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{PoisonPill, ReceiveTimeout, Terminated, ActorRef}
+import akka.actor.{ActorRef, ReceiveTimeout, Terminated}
 import akka.cluster.sharding.ShardRegion
-import akka.cluster.sharding.ShardRegion.Passivate
-import akka.persistence.{SnapshotOffer, PersistentView}
+import akka.persistence.{PersistentView, SnapshotOffer}
 import reactivethesis.poll.PollState
 import reactivethesis.poll.PollState._
-import reactivethesis.poll.Protocol.{InvalidState, PostChatMessage}
-import reactivethesis.poll.actors.PollChatViewActor.QueryMessages
+import reactivethesis.poll.Protocol.InvalidState
+import reactivethesis.sharding.ShardedEntityWithBackoff.RequestPassivate
 
-import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
 object PollViewActor {
@@ -39,7 +36,9 @@ class PollViewActor(id: String, passivator: ActorRef) extends PersistentView {
   context.setReceiveTimeout(2.minutes)
 
   def receive: Receive = passivate orElse {
-    case event: PollEvent => state = updateState(state, event)
+    case event: PollEvent =>
+      state = updateState(state, event)
+      watchers foreach { _ ! state.get.poll }
     case SnapshotOffer(_, stateSnapshot) => state = stateSnapshot.asInstanceOf[Option[PollState]]
     case QueryPoll(streaming) => state match {
       case Some(pollState) =>
@@ -57,9 +56,6 @@ class PollViewActor(id: String, passivator: ActorRef) extends PersistentView {
   }
 
   def passivate: Receive = {
-    case ReceiveTimeout => passivator ! Passivate(stopMessage = Stop)
-    case Stop =>
-      context.stop(self)
-      context.parent ! PoisonPill
+    case ReceiveTimeout => passivator ! RequestPassivate
   }
 }

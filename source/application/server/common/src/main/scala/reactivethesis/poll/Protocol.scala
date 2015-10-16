@@ -4,9 +4,9 @@ import play.api.libs.json.Json
 
 object Protocol {
   sealed trait PollCommand
-  case class StartPoll(options: List[String]) extends PollCommand
+  case class StartPoll(description: String, options: List[String]) extends PollCommand
   case class AnswerPoll(name: String, optionsAnswers: List[Boolean]) extends PollCommand
-  case class UpdatePollAnswer(id: Int, optionsAnswers: List[Boolean]) extends PollCommand
+  case class UpdatePollAnswer(id: Int, name : String, optionsAnswers: List[Boolean]) extends PollCommand
   case class RemovePollAnswer(id: Int) extends PollCommand
 
   case class StartPollAck(id: String)
@@ -27,4 +27,6 @@ object Protocol {
   implicit val answerPollFormat = Json.format[AnswerPoll]
   implicit val updatePollAnswerFormat = Json.format[UpdatePollAnswer]
   implicit val removePollAnswerFormat = Json.format[RemovePollAnswer]
+
+  implicit val postChatMessageFormat = Json.format[PostChatMessage]
 }

@@ -14,15 +14,19 @@
     <!-- endbuild -->
   </head>
   <body>
+    <div class="notifications" ng-if="$root.notifications && $root.notifications.length > 0">
+      <div class="notification" ng-repeat="notification in $root.notifications">{{ notification.message }}</div>
+    </div>
+
     <header>
       <nav>
         <ul>
           <li><a href="#/polls">Pools</a></li>
           <li><a href="#/code-processor">Code Processor</a></li>
         </ul>
-      </nav<
-    </heaer>
-  
+      </nav>
+    </header>
+
     <main ng-view=""></main>
 
     <!-- build:js(.) scripts/vendor.js -->
@@ -30,13 +34,20 @@
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-route/angular-route.js"></script>
     <script src="bower_components/angular-websocket/angular-websocket.min.js"></script>
+    <script src="bower_components/lodash/lodash.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 
     <!-- build:js({.tmp,app}) scripts/scripts.js -->
     <script src="scripts/app.js"></script>
     <script src="scripts/controllers/main.js"></script>
-    <script src="scripts/controllers/code-processor-ctrl.js"></script>
+    <script src="scripts/controllers/polls.js"></script>
+    <script src="scripts/controllers/poll.js"></script>
+    <script src="scripts/controllers/code-processor.js"></script>
+
+    <script src="scripts/services/notifications-service.js"></script>
+    <script src="scripts/services/api-call.js"></script>
+    <script src="scripts/services/web/poll-service.js"></script>
     <!-- endbuild -->
 </body>
 </html>

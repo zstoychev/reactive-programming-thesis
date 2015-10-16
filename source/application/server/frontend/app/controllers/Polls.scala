@@ -53,8 +53,8 @@ class Polls @Inject() (@Named("polls") polls: ActorRef, @Named("pollsChats") pol
     handlePollAck(polls ? (id, request.body))
   }
 
-  def removePollAnswer(id: String, answerId: Int) = Action.async(parse.json[RemovePollAnswer]) { request =>
-    handlePollAck(polls ? (id, request.body))
+  def removePollAnswer(id: String, answerId: Int) = Action.async { request =>
+    handlePollAck(polls ? (id, RemovePollAnswer(answerId)))
   }
 
   def getPoll(id: String) = Action.async { request =>
@@ -66,6 +66,15 @@ class Polls @Inject() (@Named("polls") polls: ActorRef, @Named("pollsChats") pol
 
   def queryPoll(id: String) = WebSocket.acceptWithActor[String, Poll] { request => out =>
     Props(new PollQueryActor(id, pollsViews, out))
+  }
+
+  def postChatMessage(id: String) = Action.async(parse.json[PostChatMessage]) { request =>
+    (pollsChats ? (id, request.body))
+      .map {
+        case PostChatMessageAck => Ok
+        case InvalidState => Conflict
+      }
+      .recover { case _: AskTimeoutException => ServiceUnavailable }
   }
 
   def queryPollChat(id: String) = WebSocket.acceptWithActor[String, (String, String)] { request => out =>

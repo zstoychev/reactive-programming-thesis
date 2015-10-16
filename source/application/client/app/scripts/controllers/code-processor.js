@@ -1,12 +1,12 @@
 'use strict';
 
-angular.module('clientApp').controller('CodeProcessorCtrl', function ($scope, $websocket, ServiceHostPort) {
+angular.module('clientApp').controller('CodeProcessorCtrl', function($scope, $websocket,
+                                                                     notificationsService, ServiceHostPort) {
   $scope.code = '';
   $scope.messages = [];
   $scope.result = null;
   $scope.parallelism = 0;
   $scope.isProcessing = false;
-  $scope.hasError = false;
 
   function watchParallelism() {
     var ws = $websocket('ws://' + ServiceHostPort + '/parallelism');
@@ -21,7 +21,7 @@ angular.module('clientApp').controller('CodeProcessorCtrl', function ($scope, $w
     $scope.messages = [];
 
     var ws = $websocket('ws://' + ServiceHostPort + '/code-processor');
-    ws.send($scope.code)
+    ws.send($scope.code);
     ws.onMessage(function(message) {
       $scope.messages.push(message);
     });
@@ -31,7 +31,9 @@ angular.module('clientApp').controller('CodeProcessorCtrl', function ($scope, $w
       $scope.$apply();
     });
     ws.onError(function() {
-      $scope.hasError = true;
+      notificationsService.notify('Connection error');
     });
-  }
+  };
+
+  watchParallelism();
 });

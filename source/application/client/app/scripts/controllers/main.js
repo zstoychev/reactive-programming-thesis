@@ -1,4 +1,4 @@
 'use strict';
 
-angular.module('clientApp').controller('MainCtrl', function () {
+angular.module('clientApp').controller('MainCtrl', function() {
 });

@@ -1,0 +1,58 @@
+<div>
+  <h1>Poll {{ pollData.id }}</h1>
+
+  <section class="poll-data">
+    <h2>{{ pollData.description }}</h2>
+
+    <table class="poll-table" ng-show="pollData != null">
+      <thead>
+       <tr>
+         <th>Name</th>
+         <th ng-repeat="option in pollData.options">{{ option }}</th>
+         <th></th>
+       </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat-start="answer in pollData.answers | orderBy:'id'" ng-show="editedAnswer != answer.id">
+          <td>{{ answer.name }}</td>
+          <td class="option-cell" ng-repeat="optionIndex in range(answer.optionsAnswers.length)">
+            <div class="option-answer" ng-class="{selected: answer.optionsAnswers[optionIndex]}"></div>
+          </td>
+          <td>
+            <button ng-click="editAnswer(answer.id)">Edit</button>
+            <button ng-click="deleteAnswer(answer.id)">Delete</button>
+          </td>
+        </tr>
+        <tr ng-repeat-end ng-show="editedAnswer == answer.id">
+          <td><input type="text" ng-model="answer.name" /></td>
+          <td class="option-cell" ng-repeat="optionIndex in range(answer.optionsAnswers.length)">
+            <input type="checkbox" ng-model="answer.optionsAnswers[optionIndex]" />
+          </td>
+          <td><button ng-click="updateAnswer(answer)" ng-disabled="answer.name == ''">Update</button></td>
+        </tr>
+
+        <tr>
+          <td><input type="text" ng-model="newAnswer.name" placeholder="Name" /></td>
+          <td class="option-cell" ng-repeat="optionIndex in range(pollData.options.length)">
+            <input type="checkbox" ng-model="newAnswer.optionsAnswers[optionIndex]" />
+          </td>
+          <td><button ng-click="answerPoll()" ng-disabled="newAnswer.name == ''">Answer</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="chat">
+    <h2>Poll chat</h2>
+    <div class="chat-window">
+      <div class="chat-message" ng-repeat="message in messages">
+        <span class="message-sender">{{ message[0] }}</span>: <span class="mesage-body">{{ message[1] }}</span>
+      </div>
+    </div>
+    <form name="chatForm" ng-submit="!chatForm.$invalid && postChatMessage()">
+      <div><input type="text" ng-model="chatInput.sender" required placeholder="name" /></div>
+      <div><textarea ng-model="chatInput.message" placeholder="Chat message..." required></textarea></div>
+      <div><button type="submit">Post</button></div>
+    </form>
+  </section>
+</div>

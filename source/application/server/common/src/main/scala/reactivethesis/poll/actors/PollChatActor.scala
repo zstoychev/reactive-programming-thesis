@@ -1,13 +1,11 @@
 package reactivethesis.poll.actors
 
-import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{ActorRef, PoisonPill, ReceiveTimeout}
+import akka.actor.{ActorRef, ReceiveTimeout}
 import akka.cluster.sharding.ShardRegion
-import akka.cluster.sharding.ShardRegion.Passivate
-import akka.persistence.{Update, PersistentActor, RecoveryCompleted, SnapshotOffer}
+import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer, Update}
 import reactivethesis.poll.Protocol
-import reactivethesis.poll.Protocol.PollCommand
 import reactivethesis.poll.actors.PollChatActor.{ChatMessagePosted, PollChatInitialized}
+import reactivethesis.sharding.ShardedEntityWithBackoff.RequestPassivate
 
 import scala.concurrent.duration._
 
@@ -52,10 +50,7 @@ class PollChatActor(id: String, passivator: ActorRef, chatViews: ActorRef) exten
   }
 
   def passivate: Receive = {
-    case ReceiveTimeout => passivator ! Passivate(stopMessage = Stop)
-    case Stop =>
-      context.stop(self)
-      context.parent ! PoisonPill
+    case ReceiveTimeout => passivator ! RequestPassivate
   }
 
   def invalidCommand: Receive = {

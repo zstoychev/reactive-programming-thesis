@@ -2,8 +2,11 @@
   <h1>Code processor</h1>
 
   <div>
-    <div><label>Enter code:</label></div>
-    <div>(can call the function <code>notify</code> for sending messages to self)</div>
+    <div><label>Enter JavaScript code:</label></div>
+    <div>
+      (You can call the function <code>context.notify</code> for sending messages to self<br />
+      or <code>context.sleep</code> for putting the thread to sleep)
+    </div>
     <div><textarea ng-model="code"></textarea></div>
   </div>
 

@@ -2,3 +2,65 @@ textarea {
   width: 640px;
   height: 256px;
 }
+
+.poll-data {
+  float: left;
+}
+
+.poll-table .option-answer:before {
+  content: "✗";
+  font-size: 24px;
+}
+
+.poll-table .option-answer.selected:before {
+  content: "✓";
+}
+
+.poll-table .option-answer,
+.poll-table .option-cell{
+  text-align: center;
+}
+
+.chat {
+  float: left;
+}
+
+.chat .chat-window {
+  border: 1px solid black;
+  width: 480px;
+  height: 320px;
+  overflow: auto;
+}
+
+.chat .chat-window .message-sender {
+  font-weight: bold;
+}
+
+.chat .chat-window .mesage-body {
+  white-space: pre;
+}
+
+.chat textarea {
+  width: 320px;
+  height: 80px;
+}
+
+.separator {
+  clear: both;
+}
+
+.notifications {
+  padding: 10px 20px;
+  border: 1px solid black;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.notifications .notification {
+  margin: 10px 0;
+}
+
+input:invalid, textarea:invalid {
+  box-shadow: none;
+}

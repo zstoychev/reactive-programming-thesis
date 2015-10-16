@@ -15,6 +15,16 @@ angular
         controller: 'MainCtrl',
         controllerAs: 'main'
       })
+      .when('/polls', {
+        templateUrl: 'views/polls.html',
+        controller: 'PollsCtrl',
+        controllerAs: 'polls'
+      })
+      .when('/polls/:id', {
+        templateUrl: 'views/poll.html',
+        controller: 'PollCtrl',
+        controllerAs: 'poll'
+      })
       .when('/code-processor', {
         templateUrl: 'views/code-processor.html',
         controller: 'CodeProcessorCtrl',

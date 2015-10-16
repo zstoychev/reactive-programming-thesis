@@ -1,12 +1,11 @@
 package reactivethesis.poll.actors
 
-import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{ActorRef, PoisonPill, ReceiveTimeout, Terminated}
+import akka.actor.{ActorRef, ReceiveTimeout, Terminated}
 import akka.cluster.sharding.ShardRegion
-import akka.cluster.sharding.ShardRegion.Passivate
 import akka.persistence.{PersistentView, SnapshotOffer}
 import reactivethesis.poll.actors.PollChatActor.ChatMessagePosted
 import reactivethesis.poll.actors.PollChatViewActor.{Messages, QueryMessages}
+import reactivethesis.sharding.ShardedEntityWithBackoff.RequestPassivate
 import reactivethesis.util.queue._
 
 import scala.collection.immutable.Queue
@@ -60,9 +59,6 @@ class PollChatViewActor(id: String, passivator: ActorRef, totalChatMessagesView:
   }
 
   def passivate: Receive = {
-    case ReceiveTimeout => passivator ! Passivate(stopMessage = Stop)
-    case Stop =>
-      context.stop(self)
-      context.parent ! PoisonPill
+    case ReceiveTimeout => passivator ! RequestPassivate
   }
 }

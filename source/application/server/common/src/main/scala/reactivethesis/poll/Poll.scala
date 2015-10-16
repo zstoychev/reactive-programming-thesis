@@ -4,7 +4,7 @@ import play.api.libs.json.Json
 import play.api.mvc.WebSocket.FrameFormatter
 
 case class PollAnswer(id: Int, name: String, optionsAnswers: List[Boolean])
-case class Poll(id: String, options: List[String], answers: List[PollAnswer])
+case class Poll(id: String, description: String, options: List[String], answers: List[PollAnswer])
 
 object PollAnswer {
   implicit val pollAnswerFormat = Json.format[PollAnswer]
