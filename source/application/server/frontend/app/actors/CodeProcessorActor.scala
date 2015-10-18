@@ -15,8 +15,8 @@ class CodeProcessorActor(codeProcessingRouter: ActorRef, out: ActorRef) extends 
 
   def processing: Receive = {
     case StatusUpdate(status) => out ! status
-    case Success(result) =>
-      out ! ("" + result) // using quotes for avoiding null
+    case Success(result: String) =>
+      out ! result
       context.stop(self)
     case Failure(e) =>
       out ! e.toString

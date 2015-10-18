@@ -1,5 +1,7 @@
 package reactivethesis.coderunner
 
+import javax.script.ScriptException
+
 import reactivethesis.util.{Eval, FutureUtil}
 import reactivethesis.worker.Master.{ProcessData, WorkData}
 import reactivethesis.worker.Worker
@@ -24,14 +26,22 @@ class ScalaCodeRunningWorker extends Worker {
       }
       implicit val ec = longRunningContext
       Future(Eval(code, ("context", codeContext)))
+        .map { result => s"$result" }
+        .recover {
+          // ScriptException can contain unserializable data
+          case e: ScriptException => throw new CodeExecutionException(e.toString)
+        }
 //    Този алтернативен код прекъсва изпълнението ако то не завърши до определено време.
 
-//      val (result, cancel) = FutureUtil.runCancellably(Eval(code, ("context", codeContext)).toString))
+//      val (result, cancel) = FutureUtil.runCancellably(Eval(code, ("context", codeContext))))
+//
 //
 //      val canceller = context.system.scheduler.scheduleOnce(TimeLimit)(cancel())(context.dispatcher)
 //      result foreach { _ => canceller.cancel() }
 //
-//      result.map(_.toString)
+//      result.map(r => s"$r").recover { case e: ScriptException => throw new CodeExecutionException(e.toString) }
     case _ => Future.failed(new Exception("Invalid data format"))
   }
 }
+
+class CodeExecutionException(message: String) extends Exception(message)
