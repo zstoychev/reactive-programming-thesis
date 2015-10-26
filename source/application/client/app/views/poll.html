@@ -4,7 +4,9 @@
   <section class="poll-data">
     <h2>{{ pollData.description }}</h2>
 
-    <table class="poll-table" ng-show="pollData != null">
+    <p ng-if="pollData == null">Connecting...</p>
+
+    <table class="poll-table" ng-if="pollData != null">
       <thead>
        <tr>
          <th>Name</th>
@@ -39,10 +41,14 @@
           <td><button ng-click="answerPoll()" ng-disabled="newAnswer.name == ''">Answer</button></td>
         </tr>
       </tbody>
+      <tfoot>
+        <td>Total</td>
+        <td class="option-cell" ng-repeat="i in range(pollData.options.length)">{{ getTotal(i) }}</td>
+      </tfoot>
     </table>
   </section>
 
-  <section class="chat">
+  <section class="chat" ng-show="pollData != null">
     <h2>Poll chat</h2>
     <div class="chat-window">
       <div class="chat-message" ng-repeat="message in messages">

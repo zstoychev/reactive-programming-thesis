@@ -36,6 +36,12 @@ angular.module('clientApp').controller('PollCtrl', function($scope, $location, $
     track(pollService.deletePollAnswer(pollId, id), 'Deleting answer failed');
   };
 
+  $scope.getTotal = function(index) {
+    return $scope.pollData.answers.filter(function(answer) {
+      return answer.optionsAnswers[index];
+    }).length;
+  };
+
   $scope.range = _.range;
 
   $scope.$watch('pollData.options.length', function(length) {
@@ -52,7 +58,7 @@ angular.module('clientApp').controller('PollCtrl', function($scope, $location, $
     notificationsService.notify('Poll stream connected');
   });
   pollWs.onError(function() {
-    notificationsService.notify('Poll stream disconnected');
+    notificationsService.notify('Poll stream error');
   });
 
   // Chat logic. TODO: Refactor in separate directive
@@ -80,6 +86,6 @@ angular.module('clientApp').controller('PollCtrl', function($scope, $location, $
     notificationsService.notify('Chat stream connected');
   });
   chatsWs.onError(function() {
-    notificationsService.notify('Chat stream disconnected');
+    notificationsService.notify('Chat stream error');
   });
 });
